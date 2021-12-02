@@ -1,3 +1,6 @@
+// https://adventofcode.com/2021/day/1
+// Sonar Sweep
+
 import { readNumberInput } from '../../common';
 
 const part01 = readNumberInput('days/day01/input01');
