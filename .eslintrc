@@ -4,9 +4,7 @@
     "project": "./tsconfig.json"
   },
   "plugins": ["@typescript-eslint"],
-  "extends": [
-    "airbnb-typescript/base"
-  ],
+  "extends": ["airbnb-typescript/base"],
   "rules": {
     "@typescript-eslint/no-use-before-define": [
       "error",
@@ -25,6 +23,7 @@
     "no-continue": "off",
     "no-prototype-builtins": "off",
     "default-case": "off",
-    "no-param-reassign": "off"
+    "no-param-reassign": "off",
+    "arrow-body-style": "off"
   }
 }
