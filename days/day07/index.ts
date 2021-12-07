@@ -1,5 +1,5 @@
 // https://adventofcode.com/2021/day/7
-// Lanternfish
+// The Treachery of Whales
 import { readInput } from '../../common';
 
 const positions = readInput('days/day07/input', ',').map(Number);
