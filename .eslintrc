@@ -18,7 +18,7 @@
       }
     ],
     "no-bitwise": "off",
-    "max-len": ["error", { "code": 120 }],
+    "max-len": ["error", { "code": 150 }],
     "no-restricted-syntax": "off",
     "no-continue": "off",
     "no-prototype-builtins": "off",
