@@ -24,6 +24,7 @@
     "no-prototype-builtins": "off",
     "default-case": "off",
     "no-param-reassign": "off",
-    "arrow-body-style": "off"
+    "arrow-body-style": "off",
+    "no-plusplus": "off"
   }
 }
