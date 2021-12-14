@@ -1,9 +1,8 @@
 // https://adventofcode.com/2021/day/12
 // Passage Pathing
-import { first } from 'lodash';
 import { readInput } from '../../common';
 
-const [polymer, input] = readInput('days/day14/demoInput', '\n\n');
+const [polymer, input] = readInput('days/day14/input', '\n\n');
 const polymerTemplates = input.split('\n').reduce((acc, pol) => {
   const [pair, insert] = pol.split(' -> ');
 
@@ -11,82 +10,52 @@ const polymerTemplates = input.split('\n').reduce((acc, pol) => {
   return acc;
 }, new Map<string, string>());
 
-class Pol {
-  name: string;
-
-  prev: Pol;
-
-  next: Pol;
-
-  constructor(name: string) {
-    this.name = name;
-  }
-}
-
 function solve(rounds: number) {
-  let firstPolymer: Pol = null;
-  let lastPolymer: Pol = null;
+  const finalPolymer = [...polymer];
+  const polymersTotals: { [index: string]: number } = {};
+  let polymerMap = new Map<string, number>();
 
-  for (const pol of polymer) {
-    const newPol = new Pol(pol);
+  for (const pol of finalPolymer) {
+    polymersTotals[pol] = (polymersTotals[pol] || 0) + 1;
+  }
 
-    newPol.prev = lastPolymer;
-    if (lastPolymer) lastPolymer.next = newPol;
-
-    lastPolymer = newPol;
-
-    if (!firstPolymer) firstPolymer = newPol;
+  for (let i = 0; i < finalPolymer.length - 1; i += 1) {
+    const pair = finalPolymer.slice(i, i + 2).join('');
+    const total = (polymerMap.get(pair) || 0) + 1;
+    polymerMap.set(pair, total);
   }
 
   while (rounds--) {
-    console.log(rounds);
-    let currentPol = firstPolymer;
+    const newPolymerMap = new Map(polymerMap);
 
-    while (currentPol.next) {
-      const nextPol = currentPol.next;
+    for (const [pol, quantity] of polymerMap) {
+      if (quantity === 0) continue;
 
-      const newPol = new Pol(polymerTemplates.get(`${currentPol.name}${nextPol.name}`));
-      newPol.prev = currentPol;
-      newPol.next = nextPol;
-      nextPol.prev = newPol;
-      currentPol.next = newPol;
+      const [a, b] = pol.split('');
+      const c = polymerTemplates.get(pol);
+      polymersTotals[c] = (polymersTotals[c] || 0) + quantity;
 
-      currentPol = nextPol;
+      const pair0Total = (newPolymerMap.get(pol) || 0) - quantity;
+      newPolymerMap.set(pol, pair0Total);
+
+      const pair1Total = (newPolymerMap.get(`${a}${c}`) || 0) + quantity;
+      newPolymerMap.set(`${a}${c}`, pair1Total);
+
+      const pair2Total = (newPolymerMap.get(`${c}${b}`) || 0) + quantity;
+      newPolymerMap.set(`${c}${b}`, pair2Total);
     }
-  }
 
-  const counts = countMap(firstPolymer);
+    polymerMap = newPolymerMap;
+  }
 
   let max = -Infinity;
   let min = Infinity;
-  for (const pol of Object.keys(counts)) {
-    if (counts[pol] > max) max = counts[pol];
-    if (counts[pol] < min) min = counts[pol];
+  for (const pol of Object.keys(polymersTotals)) {
+    if (polymersTotals[pol] > max) max = polymersTotals[pol];
+    if (polymersTotals[pol] < min) min = polymersTotals[pol];
   }
 
   return max - min;
-}
-
-function countMap(firstPol: Pol): { [index: string]: number } {
-  const counts: { [index: string]: number } = {};
-  let pol = firstPol;
-
-  while (pol) {
-    counts[pol.name] = counts[pol.name] ? counts[pol.name] + 1 : 1;
-    pol = pol.next;
-  }
-
-  return counts;
-}
-
-function printPol(firstPol: Pol) {
-  let pol = firstPol;
-
-  while (pol) {
-    process.stdout.write(pol.name);
-    pol = pol.next;
-  }
-  process.stdout.write('\n');
 }
 
 process.stdout.write(`Part 01: ${solve(10)}\n`);
