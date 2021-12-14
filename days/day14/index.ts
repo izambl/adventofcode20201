@@ -1,8 +1,9 @@
 // https://adventofcode.com/2021/day/12
 // Passage Pathing
+import { first } from 'lodash';
 import { readInput } from '../../common';
 
-const [polymer, input] = readInput('days/day14/input', '\n\n');
+const [polymer, input] = readInput('days/day14/demoInput', '\n\n');
 const polymerTemplates = input.split('\n').reduce((acc, pol) => {
   const [pair, insert] = pol.split(' -> ');
 
@@ -10,37 +11,82 @@ const polymerTemplates = input.split('\n').reduce((acc, pol) => {
   return acc;
 }, new Map<string, string>());
 
+class Pol {
+  name: string;
+
+  prev: Pol;
+
+  next: Pol;
+
+  constructor(name: string) {
+    this.name = name;
+  }
+}
+
 function solve(rounds: number) {
-  let finalPolymer = [...polymer];
+  let firstPolymer: Pol = null;
+  let lastPolymer: Pol = null;
 
-  while (rounds--) {
-    let newPolymer: string[] = [];
+  for (const pol of polymer) {
+    const newPol = new Pol(pol);
 
-    console.log(rounds);
+    newPol.prev = lastPolymer;
+    if (lastPolymer) lastPolymer.next = newPol;
 
-    for (let i = 0; i < finalPolymer.length - 1; i += 1) {
-      const pair = finalPolymer.slice(i, i + 2);
-      pair.splice(1, 0, polymerTemplates.get(pair.join('')));
+    lastPolymer = newPol;
 
-      newPolymer.pop();
-      newPolymer = [...newPolymer, ...pair];
-    }
-
-    finalPolymer = newPolymer;
+    if (!firstPolymer) firstPolymer = newPol;
   }
 
-  const appareancesCount: { [index: string]: number } = {};
+  while (rounds--) {
+    console.log(rounds);
+    let currentPol = firstPolymer;
+
+    while (currentPol.next) {
+      const nextPol = currentPol.next;
+
+      const newPol = new Pol(polymerTemplates.get(`${currentPol.name}${nextPol.name}`));
+      newPol.prev = currentPol;
+      newPol.next = nextPol;
+      nextPol.prev = newPol;
+      currentPol.next = newPol;
+
+      currentPol = nextPol;
+    }
+  }
+
+  const counts = countMap(firstPolymer);
+
   let max = -Infinity;
   let min = Infinity;
-
-  for (const pol of finalPolymer) appareancesCount[pol] = appareancesCount[pol] ? (appareancesCount[pol] += 1) : 1;
-
-  for (const pol of Object.keys(appareancesCount)) {
-    if (appareancesCount[pol] > max) max = appareancesCount[pol];
-    if (appareancesCount[pol] < min) min = appareancesCount[pol];
+  for (const pol of Object.keys(counts)) {
+    if (counts[pol] > max) max = counts[pol];
+    if (counts[pol] < min) min = counts[pol];
   }
 
   return max - min;
+}
+
+function countMap(firstPol: Pol): { [index: string]: number } {
+  const counts: { [index: string]: number } = {};
+  let pol = firstPol;
+
+  while (pol) {
+    counts[pol.name] = counts[pol.name] ? counts[pol.name] + 1 : 1;
+    pol = pol.next;
+  }
+
+  return counts;
+}
+
+function printPol(firstPol: Pol) {
+  let pol = firstPol;
+
+  while (pol) {
+    process.stdout.write(pol.name);
+    pol = pol.next;
+  }
+  process.stdout.write('\n');
 }
 
 process.stdout.write(`Part 01: ${solve(10)}\n`);
