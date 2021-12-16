@@ -57,7 +57,7 @@ function findPaths(
   minPath: number = Infinity
 ): number {
   if (from === destination) {
-    foundPaths.push(currentPath[1].map((chiton) => chiton.risk));
+    // foundPaths.push(currentPath[1].map((chiton) => chiton.risk));
 
     const pathRisk = currentPath[0];
 
@@ -66,17 +66,20 @@ function findPaths(
     return pathRisk < minPath ? pathRisk : minPath;
   }
 
-  for (const neighbor of [from.bottom, from.right]) {
+  for (const neighbor of [from.bottom, from.right, from.top, from.left]) {
     if (!neighbor) continue;
+    if (currentPath[0] + neighbor.risk >= minPath) continue;
     // if (currentPath[1].includes(neighbor)) continue;
 
-    const nextPath: [number, Chiton[]] = [currentPath[0] + neighbor.risk, [...currentPath[1], neighbor]];
-
-    if (nextPath[0] > minPath) continue;
+    currentPath[0] += neighbor.risk;
+    // currentPath[1].push(neighbor);
 
     // console.log('NEXT PATH', nextPath[1].map((c) => c.risk).join(''));
 
-    minPath = findPaths(neighbor, destination, nextPath, foundPaths, minPath);
+    minPath = findPaths(neighbor, destination, currentPath, foundPaths, minPath);
+
+    currentPath[0] -= neighbor.risk;
+    // currentPath[1].pop();
   }
 
   return minPath;
