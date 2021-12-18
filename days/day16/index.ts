@@ -7,9 +7,9 @@ const input = readInput('days/day16/input', '\n')[0]
   .map((value) => `0000${parseInt(value, 16).toString(2)}`.slice(-4))
   .join('');
 
-let versions = 0;
+let part01Versions = 0;
 
-function parseType4Literals(binaries: string): [number, string[]] {
+function parseValue(binaries: string): [number, string] {
   let literalsIndex = 0;
   const subSegments = [];
   let subSegment = binaries.slice(literalsIndex, literalsIndex + 5);
@@ -29,58 +29,61 @@ function parseType4Literals(binaries: string): [number, string[]] {
     2
   );
 
-  return [number, subSegments];
+  const leftover = binaries.slice(literalsIndex + 5);
+
+  return [number, leftover];
 }
 
-function getOperationValues(binaries: string) {
-  const lengthTypeId = binaries.slice(6, 7);
+function getOperationValues(binaries: string): [number, string] {
+  const TYPE_0_LENGTH = 15;
+  const TYPE_1_LENGTH = 11;
+  const lengthTypeId = binaries.slice(0, 1);
 
   if (lengthTypeId === '0') {
-    const subPacketsLength = parseInt(binaries.slice(7, 22), 2);
-    console.log('Sub packet length', subPacketsLength);
-    const subPacketsBits = binaries.slice(22, 22 + subPacketsLength);
-    const leftover = binaries.slice(22 + subPacketsLength);
+    const subPacketsLength = parseInt(binaries.slice(1, 1 + TYPE_0_LENGTH), 2);
+    const subPacketsBits = binaries.slice(1 + TYPE_0_LENGTH, 1 + TYPE_0_LENGTH + subPacketsLength);
+    const leftover = binaries.slice(1 + TYPE_0_LENGTH + subPacketsLength);
 
-    doSegment(subPacketsBits);
-    if (leftover) doSegment(leftover);
+    console.log(` typeId: 0, ${subPacketsLength} sub-segments length`);
+
+    const [value] = decode(subPacketsBits);
+    return [value, leftover];
   }
 
   if (lengthTypeId === '1') {
-    const numberOfSubSegments = parseInt(binaries.slice(7, 18), 2);
-    console.log('Number of segments', numberOfSubSegments);
-    const subSegment = binaries.slice(18);
-    doSegment(subSegment);
+    const numberOfSubSegments = parseInt(binaries.slice(1, 1 + TYPE_1_LENGTH), 2);
+    const values = [];
+    let subSegment = binaries.slice(1 + TYPE_1_LENGTH);
+
+    console.log(` typeId: 1, ${numberOfSubSegments} sub-segments`);
+
+    for (let i = 0; i < numberOfSubSegments; i += 1) {
+      const [value, leftover] = decode(subSegment);
+      values.push(value);
+      subSegment = leftover;
+      console.log(`  sub-segment ${i}:  ${value}`);
+    }
+
+    return [values[0], subSegment];
   }
 }
 
-function doSegment(binaries: string) {
+function decode(binaries: string): [number, string] {
   const version = parseInt(binaries.slice(0, 3), 2);
   const type = parseInt(binaries.slice(3, 6), 2);
-  versions += version;
+  part01Versions += version;
 
-  console.log(`Package: version: ${version} type: ${type}`);
+  console.log(`package: version: ${version} type: ${type}   --  ${binaries.length}`);
 
-  if (type === 4) {
-    const [number, subSegments] = parseType4Literals(binaries.slice(6));
-
-    const leftover = binaries.slice(6 + subSegments.length * 5);
-
-    console.log('LITERAL', number);
-    if (leftover) doSegment(leftover);
-  } else {
-    const opValues = getOperationValues(binaries);
-  }
+  if (type === 4) return parseValue(binaries.slice(6));
+  return getOperationValues(binaries.slice(6));
 }
 
-function part01() {
-  doSegment(input);
+function go() {
+  const [value, leftover] = decode(input);
 
-  return versions;
+  process.stdout.write(`Part 01: ${part01Versions}\n`);
+  process.stdout.write(`Part 02: ${value}  ${leftover.length}:${leftover}\n`);
 }
 
-function part02() {
-  // doSegment(input);
-}
-
-process.stdout.write(`Part 01: ${part01()}\n`);
-process.stdout.write(`Part 02: ${part02()}\n`);
+go();
