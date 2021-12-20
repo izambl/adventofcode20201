@@ -34,49 +34,81 @@ function parseValue(binaries: string): [number, string] {
   return [number, leftover];
 }
 
-function getOperationValues(binaries: string): [number, string] {
-  const TYPE_0_LENGTH = 15;
-  const TYPE_1_LENGTH = 11;
+function getOperationValues(binaries: string, type: number): [number, string] {
+  const TYPE_ID_0_LENGTH = 15;
+  const TYPE_ID_1_LENGTH = 11;
   const lengthTypeId = binaries.slice(0, 1);
 
+  const values = [];
+  let leftover = '';
+
   if (lengthTypeId === '0') {
-    const subPacketsLength = parseInt(binaries.slice(1, 1 + TYPE_0_LENGTH), 2);
-    const subPacketsBits = binaries.slice(1 + TYPE_0_LENGTH, 1 + TYPE_0_LENGTH + subPacketsLength);
-    const leftover = binaries.slice(1 + TYPE_0_LENGTH + subPacketsLength);
+    const subPacketsLength = parseInt(binaries.slice(1, 1 + TYPE_ID_0_LENGTH), 2);
+    leftover = binaries.slice(1 + TYPE_ID_0_LENGTH + subPacketsLength);
 
-    console.log(` typeId: 0, ${subPacketsLength} sub-segments length`);
+    let subPacketsBits = binaries.slice(1 + TYPE_ID_0_LENGTH, 1 + TYPE_ID_0_LENGTH + subPacketsLength);
+    let value = null;
 
-    const [value] = decode(subPacketsBits);
-    return [value, leftover];
+    do {
+      [value, subPacketsBits] = decode(subPacketsBits);
+      values.push(value);
+    } while (subPacketsBits);
   }
 
   if (lengthTypeId === '1') {
-    const numberOfSubSegments = parseInt(binaries.slice(1, 1 + TYPE_1_LENGTH), 2);
-    const values = [];
-    let subSegment = binaries.slice(1 + TYPE_1_LENGTH);
-
-    console.log(` typeId: 1, ${numberOfSubSegments} sub-segments`);
+    const numberOfSubSegments = parseInt(binaries.slice(1, 1 + TYPE_ID_1_LENGTH), 2);
+    let subSegment = binaries.slice(1 + TYPE_ID_1_LENGTH);
 
     for (let i = 0; i < numberOfSubSegments; i += 1) {
       const [value, leftover] = decode(subSegment);
       values.push(value);
       subSegment = leftover;
-      console.log(`  sub-segment ${i}:  ${value}`);
     }
 
-    return [values[0], subSegment];
+    leftover = subSegment;
   }
+
+  return [processValues(values, type), leftover];
+}
+
+function processValues(values: number[], operation: number): number {
+  if (operation === 0) {
+    return values.reduce((acc, value) => acc + value, 0);
+  }
+  if (operation === 1) {
+    return values.reduce((acc, value) => acc * value, 1);
+  }
+  if (operation === 2) {
+    return Math.min(...values);
+  }
+  if (operation === 3) {
+    return Math.max(...values);
+  }
+  if (operation === 5) {
+    return values[0] > values[1] ? 1 : 0;
+  }
+  if (operation === 6) {
+    return values[0] < values[1] ? 1 : 0;
+  }
+  if (operation === 7) {
+    return values[0] === values[1] ? 1 : 0;
+  }
+
+  return 0;
 }
 
 function decode(binaries: string): [number, string] {
   const version = parseInt(binaries.slice(0, 3), 2);
   const type = parseInt(binaries.slice(3, 6), 2);
+  const binariesContent = binaries.slice(6);
+
   part01Versions += version;
 
-  console.log(`package: version: ${version} type: ${type}   --  ${binaries.length}`);
+  console.log(`package: version: ${version} type: ${type}`);
 
-  if (type === 4) return parseValue(binaries.slice(6));
-  return getOperationValues(binaries.slice(6));
+  if (type === 4) return parseValue(binariesContent);
+
+  return getOperationValues(binariesContent, type);
 }
 
 function go() {
