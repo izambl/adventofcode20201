@@ -14,6 +14,7 @@ class Beacon implements Positionable {
   y: number;
   z: number;
   scanner: Scanner;
+  permutations: Array<[number, number, number]>;
   distanceTo: [Beacon, number][];
 
   constructor(scanner: Scanner, x: number, y: number, z: number) {
@@ -22,6 +23,8 @@ class Beacon implements Positionable {
     this.y = y;
     this.z = z;
     this.distanceTo = [];
+
+    this.permutations = permutations(x, y, z);
 
     this.scanner.addBeacon(this);
   }
@@ -88,3 +91,39 @@ function part01() {
 }
 
 part01();
+
+function permutations(x: number, y: number, z: number): Array<[number, number, number]> {
+  const permutations: Array<[number, number, number]> = [];
+
+  permutations.push([x, z, -y]);
+  permutations.push([x, -y, -z]);
+  permutations.push([x, -z, -y]);
+  permutations.push([x, y, z]);
+
+  permutations.push([-x, y, -z]);
+  permutations.push([-x, z, y]);
+  permutations.push([-x, -y, z]);
+  permutations.push([-x, -z, -y]);
+
+  permutations.push([-y, x, z]);
+  permutations.push([z, x, y]);
+  permutations.push([y, x, -z]);
+  permutations.push([-z, x, -y]);
+
+  permutations.push([y, -x, z]);
+  permutations.push([-z, -x, y]);
+  permutations.push([-y, -x, -z]);
+  permutations.push([z, -x, -y]);
+
+  permutations.push([y, z, x]);
+  permutations.push([-z, y, x]);
+  permutations.push([-y, -z, x]);
+  permutations.push([z, -y, x]);
+
+  permutations.push([z, y, -x]);
+  permutations.push([y, -z, -x]);
+  permutations.push([-z, -y, -x]);
+  permutations.push([-y, z, -x]);
+
+  return permutations;
+}
