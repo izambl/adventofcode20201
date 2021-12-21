@@ -1,11 +1,9 @@
 // https://adventofcode.com/2021/day/19
 // eacon Scanner
 
-import { timeStamp } from 'console';
-import { threadId } from 'worker_threads';
 import { readInput } from '../../common';
 
-const [player01, player02] = readInput('days/day21/demoInput', '\n').map((player) => Number(player.split(': ')[1]));
+const [player01, player02] = readInput('days/day21/input', '\n').map((player) => Number(player.split(': ')[1]));
 
 interface Player {
   score: number;
@@ -36,47 +34,44 @@ function part01() {
   return Math.min(players.p1.score, players.p2.score) * rolls;
 }
 
-let it = 0;
-const w = [0, 0];
-
-function roll(turn = 'p1', diceRoll: number, diceResult: number, p1: Player, p2: Player, wins: [number, number]): [number, number] {
-  const nextTurn = diceRoll === 3 ? (turn === 'p1' ? 'p2' : 'p1') : turn;
-  const player = turn === 'p1' ? p1 : p2;
-
-  it += 1;
-  if (it % 1000000 === 0) console.log(it, w);
+function roll(turn: string, diceResult: number, p1: Player, p2: Player, wins: [number, number], multiplier: number): [number, number] {
+  const nextTurn = turn === 'p1' ? 'p2' : 'p1';
+  const player = turn === 'p2' ? p2 : p1;
 
   player.pos += diceResult;
-  if (diceRoll === 3) {
-    player.score += player.pos % 10 || 10;
-    diceRoll = 0;
-  }
+  if (diceResult) player.score += player.pos % 10 || 10;
 
   if (player.score >= 21) {
-    if (turn === 'p1') w[0] += 1;
-    else w[1] += 1;
+    if (turn === 'p1') {
+      wins[0] += multiplier;
+    } else {
+      wins[1] += multiplier;
+    }
 
     return wins;
   }
 
-  const win1 = roll(nextTurn, diceRoll + 1, 1, { ...p1 }, { ...p2 }, [...wins]);
-  const win2 = roll(nextTurn, diceRoll + 1, 2, { ...p1 }, { ...p2 }, [...wins]);
-  const win3 = roll(nextTurn, diceRoll + 1, 3, { ...p1 }, { ...p2 }, [...wins]);
+  const win1 = roll(nextTurn, 3, { ...p1 }, { ...p2 }, [...wins], multiplier * 1);
+  const win2 = roll(nextTurn, 4, { ...p1 }, { ...p2 }, [...wins], multiplier * 3);
+  const win3 = roll(nextTurn, 5, { ...p1 }, { ...p2 }, [...wins], multiplier * 6);
+  const win4 = roll(nextTurn, 6, { ...p1 }, { ...p2 }, [...wins], multiplier * 7);
+  const win5 = roll(nextTurn, 7, { ...p1 }, { ...p2 }, [...wins], multiplier * 6);
+  const win6 = roll(nextTurn, 8, { ...p1 }, { ...p2 }, [...wins], multiplier * 3);
+  const win7 = roll(nextTurn, 9, { ...p1 }, { ...p2 }, [...wins], multiplier * 1);
 
-  return [win1[0] + win2[0] + win3[0], win1[1] + win2[1] + win3[1]];
+  return [wins, win1, win2, win3, win4, win5, win6, win7].reduce(
+    (acc, win) => {
+      return [acc[0] + win[0], acc[1] + win[1]];
+    },
+    [0, 0]
+  );
 }
 
 function part02() {
-  const win1 = roll('p1', 1, 1, { pos: player01, score: 0 }, { pos: player02, score: 0 }, [0, 0]);
-  const win2 = roll('p1', 1, 2, { pos: player01, score: 0 }, { pos: player02, score: 0 }, [0, 0]);
-  const win3 = roll('p1', 1, 3, { pos: player01, score: 0 }, { pos: player02, score: 0 }, [0, 0]);
+  const res = roll('', 0, { pos: player01, score: 0 }, { pos: player02, score: 0 }, [0, 0], 1);
 
-  return [win1[0] + win2[0] + win3[0], win1[1] + win2[1] + win3[1]];
+  return res;
 }
-
-// 444356092776315
-// 341960390180808
-//       553480631
 
 process.stdout.write(`Part 01: ${part01()}\n`);
 process.stdout.write(`Part 02: ${part02()}\n`);
